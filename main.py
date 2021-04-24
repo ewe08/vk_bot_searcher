@@ -28,7 +28,9 @@ def main():
                 photo = Photo(event)
                 print(event.obj.message)
                 text = event.obj.message["text"].strip(".,?!").lower()
-                if text in ["игра"]:
+                if text in ["привет"]:
+                    hello(event)
+                elif text in ["игра"]:
                     Game(event)
                 elif text in ["запомни"]:
                     photo.save_photo()
@@ -36,6 +38,8 @@ def main():
                     photo.photo_list()
                 elif text in ["команды"]:
                     return_info(event)
+                elif text in ["статистика"]:
+                    static(event)
                 else:
                     output(event, 'вы ввели что-то непонятное...\n'
                                   'Вы можете ознакомиться с командами написав "команды"')
@@ -56,7 +60,8 @@ def return_info(event):
     commands = "Игра - Вы запускаете географический тест \n " \
                "Запомни - Вы отправляете боту фотографию, а он ее " \
                "запоминает по тегу и может веруть в любой момент\n" \
-               "Список - Выводит список всех этих фотографий"
+               "Список - Выводит список всех этих фотографий\n" \
+               "Статистика - выводит статистику ответов в игре"
     output(event, commands)
 
 
@@ -69,30 +74,41 @@ class Photo:
         self.photos = os.listdir()
 
     def save_photo(self):
+
         output(self.event, "Отправте фотографию с подписью, которуе нужно запомнить.")
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
-                # Проверка, что есть фотография
-                if not event.obj.message["attachments"]:
-                    return
-                self.event = event
-                self.url = event.obj.message["attachments"][0]["photo"]["sizes"][-1]["url"]
-                self.tag = event.obj.message["text"]
-                img_data = requests.get(self.url).content
                 try:
-                    os.mkdir(f"data/{self.user}")
-                except OSError:
-                    pass
-                with open(f'data/{self.user}/{self.tag}.jpg', 'wb') as handler:
-                    handler.write(img_data)
-                output(self.event, "Я запомнил эту фотографию.")
-                break
+                    if event.obj.message["text"].lower().strip(".,?!") == 'отмена':
+                        return_info(event)
+                        break
+                    # Проверка, что есть фотография
+                    if not event.obj.message["attachments"]:
+                        raise Exception("Вы не указали фотографию")
+                    self.event = event
+                    try:
+                        self.url = event.obj.message["attachments"][0]["photo"]["sizes"][-1]["url"]
+                    except Exception:
+                        output(event, "Вы указали не фотографию")
+                    self.tag = event.obj.message["text"]
+                    if self.tag == '':
+                        raise Exception("Вы не ввели тег фотографии")
+                    img_data = requests.get(self.url).content
+                    try:
+                        os.mkdir(f"data/{self.user}")
+                    except OSError:
+                        pass
+                    with open(f'data/{self.user}/{self.tag}.jpg', 'wb') as handler:
+                        handler.write(img_data)
+                    output(self.event, "Я запомнил эту фотографию.")
+                    break
+                except Exception as ex:
+                    output(event, ex)
 
     def photo_list(self):
         os.chdir(f'data/{self.user}')
         self.photos = os.listdir()
         os.chdir('../..')
-        print(os.getcwd())
         output(self.event, "У меня сохранены фото:")
         i = 0
         for photo in self.photos:
@@ -106,15 +122,18 @@ class Photo:
             if event.type == VkBotEventType.MESSAGE_NEW:
                 index = event.obj.message["text"].strip(".,?!").lower()
                 upload = vk_api.VkUpload(vk_session)
-                output(event, "Вот ваша фотография")
-                photo = [f"data/{self.user}/{self.photos[int(index)]}"]
-                photo = upload.photo_messages(photo)
-                print(photo)
-                vk.messages.send(user_id=self.user,
-                                 attachment='photo{}_{}'.format(photo[0]['owner_id'],
-                                                                photo[0]['id']),
-                                 random_id=random.randint(0, 2 ** 64))
-                break
+                try:
+                    photo = [f"data/{self.user}/{self.photos[int(index)]}"]
+                    photo = upload.photo_messages(photo)
+
+                    output(event, "Вот ваша фотография")
+                    vk.messages.send(user_id=self.user,
+                                     attachment='photo{}_{}'.format(photo[0]['owner_id'],
+                                                                    photo[0]['id']),
+                                     random_id=random.randint(0, 2 ** 64))
+                    break
+                except Exception:
+                    output(event, "Вы ввели неправильный id")
 
 
 class Game:
@@ -122,26 +141,49 @@ class Game:
         self.event = event
         self.photo = random.choice(get_photo_from_album(group=group_id, album=city_album))
         with open('city.json') as js_f:
-            data = dict(json.load(js_f))
-        self.city = data[str(self.photo[1])].lower()
-        self.play()
+            self.data = dict(json.load(js_f))
+        self.city = self.data[str(self.photo[1])]
+        self.is_count = False
+        self.choice_lvl()
 
-    def play(self):
-        output(self.event, "Что это за город?")
-        vk.messages.send(user_id=self.event.obj.message['from_id'],
-                         attachment=self.photo[0],
-                         random_id=random.randint(0, 2 ** 64))
-        with open('city.json') as js_f:
-            data = dict(json.load(js_f))
+    def choice_lvl(self):
+        output(self.event, "Выберите уровень: Страны или Города")
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
                 text = event.obj.message["text"].strip(".,?!").lower()
-                if text == self.city:
-                    output(event, "Правильно!")
-                    break
+                if text in ["страны"]:
+                    self.change_photo()
+                    self.play("countries.json")
+                elif text in ["города"]:
+                    self.play("city.json")
                 else:
-                    output(event, f"Нет, это {data[str(self.photo[1])]}.")
-                    break
+                    output(event, 'Вы ввели что-то неправильно')
+                break
+
+    def change_photo(self):
+        self.photo = random.choice(get_photo_from_album(group=group_id, album=countries_album))
+        with open('countries.json') as js_f:
+            self.data = dict(json.load(js_f))
+        self.city = self.data[str(self.photo[1])]
+        self.is_count = True
+
+    def play(self, file):
+        output(self.event, "Что это?")
+        vk.messages.send(user_id=self.event.obj.message['from_id'],
+                         attachment=self.photo[0],
+                         random_id=random.randint(0, 2 ** 64))
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                text = event.obj.message["text"].strip(".,?!").lower()
+                if text == self.city["name"].lower():
+                    output(event, "Правильно!")
+                    self.city["static"]["right"] += 1
+                else:
+                    output(event, f"Нет, это {self.city['name']}.")
+                    self.city["static"]["Not properly"] += 1
+                break
+        with open(file, 'w') as json_f:
+            json.dump(self.data, json_f)
         self.go_wiki()
 
     def go_wiki(self):
@@ -151,12 +193,29 @@ class Game:
                 text = event.obj.message["text"].strip(".,?!").lower()
                 if text == 'да':
                     self.search_wiki()
-                else:
-                    return
+                return_info(event)
+                break
 
     def search_wiki(self):
-        info = wikipedia.summary(self.city)
-        output(self.event, info)
+        try:
+            if self.is_count:
+                req = self.city["name"] + ' Страна'
+            else:
+                req = self.city["name"] + ' Город'
+            info = wikipedia.summary(req)
+            output(self.event, info)
+        except Exception:
+            output(self.event, 'Произошла ошибка при поиске информации в википедии')
+
+
+def static(event):
+    with open('city.json') as js_f:
+        data = json.load(js_f)
+    stat = ''
+    for city in data.keys():
+        stat += f"{data[city]['name']} - Верно: {data[city]['static']['right']}," \
+                f" не верно: {data[city]['static']['Not properly']}" + '\n'
+    output(event, stat)
 
 
 def output_info_user(event):
@@ -189,12 +248,13 @@ def get_coord(address):
         return toponym_pos
 
 
-def get_image(coord):
+def get_image(coord, z):
     map_request = "http://static-maps.yandex.ru/1.x/"
 
     params = {
         "ll": coord,
-        "z": 14,
+        "z": z,
+        "pt": coord,
         "l": 'sat'
     }
     response = requests.get(map_request, params=params)
@@ -221,20 +281,25 @@ def get_photo_from_album(album, group):
 
 
 # Фунуция для обновления списка городов
-def add_counties():
-    countries = ['Новосибирск', 'Москва', 'Санкт-Петербург', 'Барнаул', 'Калининград',
-                 'Казань', 'Томск', 'Выборг', 'Смоленск', 'Ростов-на-Дону']
-    with open("city.json") as json_f:
+countries = [('Россия', 3), ("Казахстан", 3), ('США', 3), ('Канада', 4), ('Сингапур', 10),
+             ('Польша', 6), ('Чехия', 6), ('Италия', 6), ('Китай', 4), ('Монголия', 6),
+             ('Грузия', 6), ('Британия', 6)]
+cities = ['Новосибирск', 'Москва', 'Санкт-Петербург', 'Барнаул', 'Калининград',
+          'Казань', 'Томск', 'Выборг', 'Смоленск', 'Ростов-на-Дону']
+
+
+def set_pic(arr, file, album):
+    with open(file) as json_f:
         data = dict(json.load(json_f))
-    for c in countries:
-        coordinates = get_coord(c)
-        map_file = get_image(coordinates)
+    for c in arr:
+        coordinates = get_coord(c[0])
+        map_file = get_image(coordinates, c[1])
         upload = vk_api.VkUpload(vk_sess)
-        photo = upload.photo(map_file, group_id=group_id, album_id=city_album)
+        photo = upload.photo(map_file, group_id=group_id, album_id=album)
         key = photo[0]["id"]
-        data[key] = c
+        data[key] = {"name": c[0], "static": {'right': 0, 'Not properly': 0}}
         os.remove(map_file)
-    with open("city.json", 'w') as json_f:
+    with open(file, 'w') as json_f:
         json.dump(data, json_f)
 
 
