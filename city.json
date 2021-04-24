@@ -1,1 +1,72 @@
-{"457239132": {"name": "\u041d\u043e\u0432\u043e\u0441\u0438\u0431\u0438\u0440\u0441\u043a", "static": {"right": 0, "Not properly": 2}}, "457239133": {"name": "\u041c\u043e\u0441\u043a\u0432\u0430", "static": {"right": 1, "Not properly": 0}}, "457239134": {"name": "\u0421\u0430\u043d\u043a\u0442-\u041f\u0435\u0442\u0435\u0440\u0431\u0443\u0440\u0433", "static": {"right": 0, "Not properly": 0}}, "457239135": {"name": "\u0411\u0430\u0440\u043d\u0430\u0443\u043b", "static": {"right": 2, "Not properly": 0}}, "457239136": {"name": "\u041a\u0430\u043b\u0438\u043d\u0438\u043d\u0433\u0440\u0430\u0434", "static": {"right": 0, "Not properly": 1}}, "457239137": {"name": "\u041a\u0430\u0437\u0430\u043d\u044c", "static": {"right": 0, "Not properly": 0}}, "457239138": {"name": "\u0422\u043e\u043c\u0441\u043a", "static": {"right": 1, "Not properly": 0}}, "457239139": {"name": "\u0412\u044b\u0431\u043e\u0440\u0433", "static": {"right": 2, "Not properly": 0}}, "457239140": {"name": "\u0421\u043c\u043e\u043b\u0435\u043d\u0441\u043a", "static": {"right": 0, "Not properly": 0}}, "457239141": {"name": "\u0420\u043e\u0441\u0442\u043e\u0432-\u043d\u0430-\u0414\u043e\u043d\u0443", "static": {"right": 0, "Not properly": 1}}}
+{
+  "457239132": {
+    "name": "\u041d\u043e\u0432\u043e\u0441\u0438\u0431\u0438\u0440\u0441\u043a",
+    "static": {
+      "right": 0,
+      "Not properly": 2
+    }
+  },
+  "457239133": {
+    "name": "\u041c\u043e\u0441\u043a\u0432\u0430",
+    "static": {
+      "right": 1,
+      "Not properly": 0
+    }
+  },
+  "457239134": {
+    "name": "\u0421\u0430\u043d\u043a\u0442-\u041f\u0435\u0442\u0435\u0440\u0431\u0443\u0440\u0433",
+    "static": {
+      "right": 0,
+      "Not properly": 0
+    }
+  },
+  "457239135": {
+    "name": "\u0411\u0430\u0440\u043d\u0430\u0443\u043b",
+    "static": {
+      "right": 2,
+      "Not properly": 0
+    }
+  },
+  "457239136": {
+    "name": "\u041a\u0430\u043b\u0438\u043d\u0438\u043d\u0433\u0440\u0430\u0434",
+    "static": {
+      "right": 0,
+      "Not properly": 1
+    }
+  },
+  "457239137": {
+    "name": "\u041a\u0430\u0437\u0430\u043d\u044c",
+    "static": {
+      "right": 0,
+      "Not properly": 0
+    }
+  },
+  "457239138": {
+    "name": "\u0422\u043e\u043c\u0441\u043a",
+    "static": {
+      "right": 3,
+      "Not properly": 0
+    }
+  },
+  "457239139": {
+    "name": "\u0412\u044b\u0431\u043e\u0440\u0433",
+    "static": {
+      "right": 2,
+      "Not properly": 0
+    }
+  },
+  "457239140": {
+    "name": "\u0421\u043c\u043e\u043b\u0435\u043d\u0441\u043a",
+    "static": {
+      "right": 0,
+      "Not properly": 0
+    }
+  },
+  "457239141": {
+    "name": "\u0420\u043e\u0441\u0442\u043e\u0432-\u043d\u0430-\u0414\u043e\u043d\u0443",
+    "static": {
+      "right": 0,
+      "Not properly": 1
+    }
+  }
+}

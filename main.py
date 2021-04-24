@@ -34,8 +34,10 @@ def main():
                     Game(event)
                 elif text in ["запомни"]:
                     photo.save_photo()
+                elif text in ["удали"]:
+                    photo.delete_photo()
                 elif text in ["список"]:
-                    photo.photo_list()
+                    photo.get_photo()
                 elif text in ["команды"]:
                     return_info(event)
                 elif text in ["статистика"]:
@@ -48,23 +50,6 @@ def main():
                 output(event, ex)
 
 
-def hello(event):
-    response = vk.users.get(user_id=event.obj.message['from_id'], fields='city')
-    name = response[0]["first_name"]
-    output(event, f"Привет, {name}")
-    if "city" in response[0]:
-        output(event, f"Как поживает {response[0]['city']['title']}?")
-
-
-def return_info(event):
-    commands = "Игра - Вы запускаете географический тест \n " \
-               "Запомни - Вы отправляете боту фотографию, а он ее " \
-               "запоминает по тегу и может веруть в любой момент\n" \
-               "Список - Выводит список всех этих фотографий\n" \
-               "Статистика - выводит статистику ответов в игре"
-    output(event, commands)
-
-
 class Photo:
     def __init__(self, event):
         self.event = event
@@ -74,7 +59,6 @@ class Photo:
         self.photos = os.listdir()
 
     def save_photo(self):
-
         output(self.event, "Отправте фотографию с подписью, которуе нужно запомнить.")
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
@@ -115,9 +99,9 @@ class Photo:
             output(self.event, f"{i}: {photo}")
             i += 1
         output(self.event, "Какая нужна? (Указать номер)")
-        self.get_photo()
 
     def get_photo(self):
+        self.photo_list()
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
                 index = event.obj.message["text"].strip(".,?!").lower()
@@ -134,6 +118,18 @@ class Photo:
                     break
                 except Exception:
                     output(event, "Вы ввели неправильный id")
+
+    def delete_photo(self):
+        self.photo_list()
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                index = event.obj.message["text"].strip(".,?!").lower()
+                try:
+                    os.remove(f"data/{self.user}/{self.photos[int(index)]}")
+                    break
+                except Exception:
+                    output(event, "Вы ввели неправильный id")
+        output(self.event, "Фотография успешна удалена")
 
 
 class Game:
@@ -206,6 +202,23 @@ class Game:
             output(self.event, info)
         except Exception:
             output(self.event, 'Произошла ошибка при поиске информации в википедии')
+
+
+def hello(event):
+    response = vk.users.get(user_id=event.obj.message['from_id'], fields='city')
+    name = response[0]["first_name"]
+    output(event, f"Привет, {name}")
+    if "city" in response[0]:
+        output(event, f"Как поживает {response[0]['city']['title']}?")
+
+
+def return_info(event):
+    commands = "Игра - Вы запускаете географический тест \n " \
+               "Запомни - Вы отправляете боту фотографию, а он ее " \
+               "запоминает по тегу и может веруть в любой момент\n" \
+               "Список - Выводит список всех этих фотографий\n" \
+               "Статистика - выводит статистику ответов в игре"
+    output(event, commands)
 
 
 def static(event):
